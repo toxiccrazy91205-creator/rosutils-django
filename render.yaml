@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ros2-django-dashboard
+    env: docker
+    dockerContext: .
+    dockerfilepath: Dockerfile.combined
+    plan: free
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: ROS_DOMAIN_ID
+        value: "42"

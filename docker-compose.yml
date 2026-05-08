@@ -1,0 +1,18 @@
+services:
+  talker:
+    build:
+      context: .
+      dockerfile: Dockerfile.ros
+    restart: always
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - talker
+    restart: always

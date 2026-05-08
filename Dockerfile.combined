@@ -1,0 +1,37 @@
+FROM ros:jazzy-ros-base
+
+# 1. Install Dependencies
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    python3-colcon-common-extensions \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install django djangorestframework --break-system-packages
+
+# 2. Setup ROS Workspace
+WORKDIR /ros_ws
+COPY ./ros_ws/src ./src
+RUN . /opt/ros/jazzy/setup.sh && colcon build
+
+# 3. Setup Django Backend
+WORKDIR /app
+COPY ./backend .
+
+# 4. Create a Startup Script
+RUN echo '#!/bin/bash\n\
+source /opt/ros/jazzy/setup.bash\n\
+source /ros_ws/install/setup.bash\n\
+# Start the ROS Talker in the background\n\
+ros2 run greeter_pkg talker &\n\
+# Run migrations and start Django\n\
+python3 manage.py makemigrations monitor\n\
+python3 manage.py migrate\n\
+python3 manage.py runserver --noreload 0.0.0.0:$PORT' > /app/start.sh
+
+RUN chmod +x /app/start.sh
+
+# Render uses the $PORT environment variable
+ENV PORT=8000
+EXPOSE 8000
+
+ENTRYPOINT ["/app/start.sh"]

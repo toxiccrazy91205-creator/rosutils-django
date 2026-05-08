@@ -1,0 +1,19 @@
+FROM ros:jazzy-ros-base
+
+# Install Python and Django dependencies
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Django
+RUN pip3 install django djangorestframework --break-system-packages
+
+# Set workdir
+WORKDIR /app
+COPY ./backend .
+
+# Expose port
+EXPOSE 8000
+
+# Start Django with --noreload to prevent double ROS threads
+ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/jazzy/setup.bash && python3 manage.py makemigrations monitor && python3 manage.py migrate && python3 manage.py runserver --noreload 0.0.0.0:8000"]
